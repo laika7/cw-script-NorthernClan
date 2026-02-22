@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Автоматизированные отчёты
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  Автоматизация отчётов и жезнеоблегчаловка
 // @author       Воющий
 // @match        *://catwar.su/blog230782*
@@ -2673,6 +2673,16 @@
                 return;
             }
 
+            const formattedReceiver = receiver.split(' ').map(word => {
+                if (word.length === 0) return word;
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            }).join(' ');
+
+            const formattedSender = sender.split(' ').map(word => {
+                if (word.length === 0) return word;
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            }).join(' ');
+
             sessionStorage.setItem('herb_receiver_temp', receiver);
             sessionStorage.setItem('herb_sender_temp', sender);
 
@@ -2719,7 +2729,7 @@
                 message = `${convertedSender} (пусто)`;
             }
 
-            sessionStorage.setItem('ls_receiver', receiver);
+            sessionStorage.setItem('ls_receiver', formattedReceiver);
             sessionStorage.setItem('ls_subject', 'Травник');
             sessionStorage.setItem('ls_message', message);
 
@@ -2786,6 +2796,16 @@
                 return;
             }
 
+            const formattedLeader = leader.split(' ').map(word => {
+                if (word.length === 0) return word;
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            }).join(' ');
+
+            const formattedSender = sender.split(' ').map(word => {
+                if (word.length === 0) return word;
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            }).join(' ');
+
             sessionStorage.setItem('hunt_leader_temp', leader);
             sessionStorage.setItem('hunt_sender_temp', sender);
 
@@ -2811,7 +2831,7 @@
                 message += `\nОсобая: ${convertedSender} (${special})`;
             }
 
-            sessionStorage.setItem('ls_receiver', leader);
+            sessionStorage.setItem('ls_receiver', formattedLeader);
             sessionStorage.setItem('ls_subject', 'Охота');
             sessionStorage.setItem('ls_message', message);
 
