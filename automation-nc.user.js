@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Автоматизированные отчёты
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Автоматизация отчётов и жезнеоблегчаловка
 // @author       Воющий
 // @match        *://catwar.su/blog230782*
