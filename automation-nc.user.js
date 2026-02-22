@@ -109,11 +109,16 @@
             return `[link${name}]`;
         }
 
+        const formattedName = name.split(' ').map(word => {
+            if (word.length === 0) return word;
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        }).join(' ');
+
         const response = await fetch('/ajax/convert', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
-                data: name,
+                data: formattedName,
                 delimiter: ',',
                 template: '[link%id%]',
                 type_in: '0',
@@ -3001,11 +3006,10 @@
             today.setHours(23, 59, 59, 999);
 
             let convertedId = hunterName;
-            if (!hunterName.match(/^\d+$/)) {
-                const converted = await convertNamesToIds(hunterName);
-                const idMatch = converted.match(/\[link(\d+)\]/);
-                convertedId = idMatch ? idMatch[1] : hunterName;
-            }
+            const formattedName = hunterName.split(' ').map(word => {
+                if (word.length === 0) return word;
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            }).join(' ');
 
             const comments = document.querySelectorAll('.view-comment');
             let total = 0;
@@ -3028,7 +3032,7 @@
 
                 let commentHunter = nameMatch[1].trim().replace(/[\[\]link]/g, '');
 
-                if (commentHunter === convertedId || commentHunter === hunterName) {
+                if (commentHunter === formattedName) {
                     const countMatch = commentText.match(/Кол-во пойманной дичи:\s*(\d+)/);
                     if (countMatch) {
                         total += parseInt(countMatch[1]);
