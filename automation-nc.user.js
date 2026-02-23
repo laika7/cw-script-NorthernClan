@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Автоматизированные отчёты
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      2.0
 // @description  Автоматизация отчётов и жезнеоблегчаловка
 // @author       Воющий
 // @match        *://catwar.su/blog230782*
@@ -225,6 +225,39 @@
             }));
         }
 
+        if (isGuard) {
+            div.appendChild(createButton('Плановый патруль', () => {
+                insertTemplate('[b]Плановый патруль[/b]\n[b]Дата[/b]: дд.мм.гг;\n[b]Время[/b]: nn:00;\n[b]Собирающий[/b]: [linkID];\n[b]Ведущий второй части[/b]: [linkID];\n[b]Участники[/b]: [linkID], [linkID];\n[b]Нарушения[/b]: [linkID] (фракция) — скриншот.');
+            }));
+            div.appendChild(createButton('Свободный патруль', () => {
+                insertTemplate('[b]Свободный патруль[/b]\n[b]Дата[/b]: дд.мм.гг;\n[b]Собирающий[/b]: [linkID];\n[b]Ведущий второй части[/b]: [linkID];\n[b]Взятый временной отрезок[/b]: nn:nn — nn:nn;\n[b]Участники[/b]: [linkID], [linkID];\n[b]Нарушения[/b]: [linkID] (фракция) — скриншот.');
+            }));
+            div.appendChild(createButton('Начало дозора', () => {
+                insertTemplate('[[n]link[/n]ID] вышел на [b][i]пассивное/активное[/i][/b] дежурство. Локация/маршрут: название.');
+            }));
+            div.appendChild(createButton('Отчёт дозора', () => {
+                insertTemplate('[b]Активный ИЛИ пассивный дозор[/b]\n[b]Дежурный[/b]: [[n]link[/n]ID];\n[b]Дата[/b]: дд.мм.гг;\n[b]Часы дежурства[/b]: nn:nn — nn:nn;\n[b]Маршрут/Охраняемая локация[/b]: номер/название;\n[b]Нарушения[/b]: Имя ID (фракция) — скриншот.');
+            }));
+            div.appendChild(createButton('Детский патруль', () => {
+                insertTemplate('[b]Детский патруль[/b]\n[b]Дата[/b]: дд.мм.гг;\n[b]Время[/b]: nn:00;\n[b]Собирающий[/b]: [linkID];\n[b]Ведущий второй части[/b]: [linkID];\n[b]Участники[/b]: [linkID], [linkID], [linkID].');
+            }));
+            div.appendChild(createButton('Начало детского дозора', () => {
+                insertTemplate('[[n]link[/n]ID] вышел на [b][i]детское[/i][/b] дежурство. Маршрут: номер.');
+            }));
+            div.appendChild(createButton('Отчёт детского дозора', () => {
+                insertTemplate('[b]Детский дозор[/b]\n[b]Дежурный[/b]: [[n]link[/n]ID];\n[b]Дата[/b]: дд.мм.гг;\n[b]Часы дежурства[/b]: nn:nn — nn:nn;\n[b]Маршрут[/b]: номер.');
+            }));
+            div.appendChild(createButton('Получение ачивки', () => {
+                insertTemplate('[b]Ачивка[/b]\nЯ, ID, желаю получить ачивку под названием «название».\n[b]Выбор шапки:[/b] ночь/день.\n[b]Подтверждение:[/b] [url=ссылка]скриншот[/url].');
+            }));
+            div.appendChild(createButton('Начало задания', () => {
+                insertTemplate('[b]Задание[/b]\nЯ, ID, приступаю к заданию №номер.');
+            }));
+            div.appendChild(createButton('Завершение задания', () => {
+                insertTemplate('[b]Задание[/b]\nЯ, ID, выполнил задание №номер.\n[b]Начало отсчёта:[/b] [url=ссылка]скриншот[/url].\n[b]Подтверждение:[/b] [url=ссылка]скриншот[/url].');
+            }));
+        }
+
         if (isHunt) {
             div.appendChild(createButton('Охотничий патруль', () => {
                 insertTemplate('[b]Дата:[/b] дд.мм.гг.\n[b]Собрал(а):[/b] [linkID].\n[b]Охотники (кол-во дичи в скобках):[/b] [linkID] (n).\n[b]Охотники, словившие особую дичь (кол-во дичи в скобках):[/b] [linkID] (n).\n[b]Носильщики:[/b] [linkID].');
@@ -326,6 +359,887 @@
                 insertTemplate('[b]Гнёздышко[/b]\n[b]Родители:[/b] ID x ID.\nВ нашей семье прибавление.\n[b]Новая информация:[/b] [[n]link[/n]ID], [[n]link[/n]ID], [[n]link[/n]ID].');
             }));
         }
+
+        return div;
+    }
+
+    function createGuardPlannedForm() {
+        const div = document.createElement('div');
+        div.style.marginBottom = '15px';
+        div.style.padding = '10px';
+        div.style.backgroundColor = COLORS.bgLight;
+        div.style.border = '1px solid ' + COLORS.border;
+        div.innerHTML = `
+        <div style="background-color: ${COLORS.bgAccent}; padding: 4px; margin-bottom: 10px; font-weight: bold;">Плановый патруль</div>
+        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center;">
+            <span>Дата:</span> <input type="date" id="planned_date" value="${getCurrentDateForInput()}" style="width: 100%;">
+            <span>Время:</span> <select id="planned_time" style="width: 100%;">
+                <option value="12:00">12:00</option>
+                <option value="17:00">17:00</option>
+                <option value="20:00">20:00</option>
+                <option value="22:00">22:00</option>
+            </select>
+            <span>Собирающий:</span> <input type="text" id="planned_collector" placeholder="ID или имя" style="width: 100%;">
+            <span>Ведущий второй части:</span> <input type="text" id="planned_coleader" placeholder="ID, имя или —" style="width: 100%;">
+            <span>Участники:</span> <input type="text" id="planned_participants" placeholder="через запятую" style="width: 100%;">
+        </div>
+
+        <div style="background-color: ${COLORS.bgAccent}; padding: 4px; margin: 15px 0 10px 0; font-weight: bold;">Нарушения</div>
+        <div id="planned_violations_container"></div>
+        <button id="add_planned_violation" style="margin: 10px 0; padding: 4px 8px; background:${COLORS.bgAccent}; color:${COLORS.textDark}; border:none; cursor:pointer;">➕ Добавить нарушение</button>
+
+        <button id="planned_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgMain}; color:${COLORS.textLight}; border:none; cursor:pointer;">Сформировать</button>
+    `;
+
+        function createViolationRow(violator = '', faction = 'Клан Падающей Воды', link = '') {
+            const row = document.createElement('div');
+            row.className = 'violation-row';
+            row.style.cssText = `
+            display: grid;
+            grid-template-columns: 1fr 180px 1fr auto;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding: 8px;
+            background-color: rgba(0,0,0,0.05);
+            border-radius: 4px;
+        `;
+
+            row.innerHTML = `
+            <input type="text" class="violation_name" placeholder="Имя или ID" value="${violator}" style="width: 100%; padding: 3px;">
+            <select class="violation_faction" style="width: 100%; padding: 3px;">
+                <option value="Клан Падающей Воды" ${faction === 'Клан Падающей Воды' ? 'selected' : ''}>Клан Падающей Воды</option>
+                <option value="Грозовое племя" ${faction === 'Грозовое племя' ? 'selected' : ''}>Грозовое племя</option>
+                <option value="Речное племя" ${faction === 'Речное племя' ? 'selected' : ''}>Речное племя</option>
+                <option value="Племя Теней" ${faction === 'Племя Теней' ? 'selected' : ''}>Племя Теней</option>
+                <option value="Племя Ветра" ${faction === 'Племя Ветра' ? 'selected' : ''}>Племя Ветра</option>
+                <option value="одиночки" ${faction === 'одиночки' ? 'selected' : ''}>одиночки</option>
+            </select>
+            <input type="text" class="violation_link" placeholder="Ссылка на скриншот" value="${link}" style="width: 100%; padding: 3px;">
+            <button class="remove_violation" style="background:${COLORS.warning}; color:white; border:none; cursor:pointer; padding:2px 8px;">✕</button>
+        `;
+
+            row.querySelector('.remove_violation').onclick = () => row.remove();
+            return row;
+        }
+
+        const container = div.querySelector('#planned_violations_container');
+        const addBtn = div.querySelector('#add_planned_violation');
+        container.appendChild(createViolationRow());
+
+        addBtn.onclick = (e) => {
+            e.preventDefault();
+            container.appendChild(createViolationRow());
+        };
+
+        div.querySelector('#planned_submit').onclick = async () => {
+            const dateInput = div.querySelector('#planned_date').value;
+            const date = dateInput ? formatDateForReport(dateInput) : 'дд.мм.гг';
+            const time = div.querySelector('#planned_time').value;
+            const collector = div.querySelector('#planned_collector').value;
+            const coleader = div.querySelector('#planned_coleader').value || '—';
+            const participants = div.querySelector('#planned_participants').value;
+
+            let convertedCollector = '[linkID]';
+            if (collector) {
+                if (collector.match(/^\[link\d+\]$/)) {
+                    convertedCollector = collector;
+                } else if (collector.match(/^\d+$/)) {
+                    convertedCollector = `[link${collector}]`;
+                } else {
+                    const converted = await convertSingleNameToId(collector);
+                    convertedCollector = converted || collector;
+                }
+            }
+
+            let convertedColeader = '—';
+            if (coleader && coleader !== '—') {
+                if (coleader.match(/^\[link\d+\]$/)) {
+                    convertedColeader = coleader;
+                } else if (coleader.match(/^\d+$/)) {
+                    convertedColeader = `[link${coleader}]`;
+                } else {
+                    const converted = await convertSingleNameToId(coleader);
+                    convertedColeader = converted || coleader;
+                }
+            }
+
+            let convertedParticipants = '[linkID]';
+            if (participants) {
+                const participantList = participants.split(',').map(p => p.trim()).filter(p => p);
+                const convertedList = [];
+                for (const p of participantList) {
+                    if (p.match(/^\[link\d+\]$/)) {
+                        convertedList.push(p);
+                    } else if (p.match(/^\d+$/)) {
+                        convertedList.push(`[link${p}]`);
+                    } else {
+                        const converted = await convertSingleNameToId(p);
+                        convertedList.push(converted || p);
+                    }
+                }
+                convertedParticipants = convertedList.join(', ');
+            }
+
+            const violationRows = document.querySelectorAll('#planned_violations_container .violation-row');
+            const violations = [];
+
+            for (const row of violationRows) {
+                const name = row.querySelector('.violation_name')?.value.trim();
+                const faction = row.querySelector('.violation_faction')?.value;
+                const link = row.querySelector('.violation_link')?.value.trim();
+
+                if (name) {
+                    let linkId = '';
+                    if (name.match(/^\d+$/)) {
+                        linkId = `[link${name}]`;
+                    } else if (name.match(/^\[link\d+\]$/)) {
+                        linkId = name;
+                    } else {
+                        const converted = await convertSingleNameToId(name);
+                        linkId = converted || name;
+                    }
+
+                    let violation = `${linkId} (${faction})`;
+                    if (link) {
+                        violation += ` — [url=${link}]скриншот[/url]`;
+                    }
+                    violations.push(violation);
+                }
+            }
+
+            const field = document.querySelector('#comment');
+            if (field) {
+                let violationsText = 'отсутствуют.';
+                if (violations.length > 0) {
+                    violationsText = violations.join('; ');
+                }
+
+                field.value = `[b]Плановый патруль[/b]\n[b]Дата[/b]: ${date};\n[b]Время[/b]: ${time};\n[b]Собирающий[/b]: ${convertedCollector};\n[b]Ведущий второй части[/b]: ${convertedColeader};\n[b]Участники[/b]: ${convertedParticipants};\n[b]Нарушения[/b]: ${violationsText}`;
+                field.focus();
+            }
+        };
+
+        return div;
+    }
+
+    function createGuardFreeForm() {
+        const div = document.createElement('div');
+        div.style.marginBottom = '15px';
+        div.style.padding = '10px';
+        div.style.backgroundColor = COLORS.bgLight;
+        div.style.border = '1px solid ' + COLORS.border;
+        div.innerHTML = `
+        <div style="background-color: ${COLORS.bgAccent}; padding: 4px; margin-bottom: 10px; font-weight: bold;">Свободный патруль</div>
+        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center;">
+            <span>Дата:</span> <input type="date" id="free_guard_date" value="${getCurrentDateForInput()}" style="width: 100%;">
+            <span>Собирающий:</span> <input type="text" id="free_guard_collector" placeholder="ID или имя" style="width: 100%;">
+            <span>Ведущий 2 части:</span> <input type="text" id="free_guard_coleader" placeholder="ID, имя или —" style="width: 100%;">
+            <span>Время начала:</span> <input type="time" id="free_guard_start" value="00:15" style="width: 100%;" step="60">
+            <span>Время окончания:</span> <input type="time" id="free_guard_end" value="00:30" style="width: 100%;" step="60">
+            <span>Участники:</span> <input type="text" id="free_guard_participants" placeholder="через запятую" style="width: 100%;">
+        </div>
+
+        <div style="background-color: ${COLORS.bgAccent}; padding: 4px; margin: 15px 0 10px 0; font-weight: bold;">Нарушения</div>
+        <div id="free_violations_container"></div>
+        <button id="add_free_violation" style="margin: 10px 0; padding: 4px 8px; background:${COLORS.bgAccent}; color:${COLORS.textDark}; border:none; cursor:pointer;">➕ Добавить нарушение</button>
+
+        <button id="free_guard_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgMain}; color:${COLORS.textLight}; border:none; cursor:pointer;">Сформировать</button>
+    `;
+
+        function createViolationRow(violator = '', faction = 'Клан Падающей Воды', link = '') {
+            const row = document.createElement('div');
+            row.className = 'violation-row';
+            row.style.cssText = `
+            display: grid;
+            grid-template-columns: 1fr 180px 1fr auto;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding: 8px;
+            background-color: rgba(0,0,0,0.05);
+            border-radius: 4px;
+        `;
+
+            row.innerHTML = `
+            <input type="text" class="violation_name" placeholder="Имя или ID" value="${violator}" style="width: 100%; padding: 3px;">
+            <select class="violation_faction" style="width: 100%; padding: 3px;">
+                <option value="Клан Падающей Воды" ${faction === 'Клан Падающей Воды' ? 'selected' : ''}>Клан Падающей Воды</option>
+                <option value="Грозовое племя" ${faction === 'Грозовое племя' ? 'selected' : ''}>Грозовое племя</option>
+                <option value="Речное племя" ${faction === 'Речное племя' ? 'selected' : ''}>Речное племя</option>
+                <option value="Племя Теней" ${faction === 'Племя Теней' ? 'selected' : ''}>Племя Теней</option>
+                <option value="Племя Ветра" ${faction === 'Племя Ветра' ? 'selected' : ''}>Племя Ветра</option>
+                <option value="одиночки" ${faction === 'одиночки' ? 'selected' : ''}>одиночки</option>
+            </select>
+            <input type="text" class="violation_link" placeholder="Ссылка на скриншот" value="${link}" style="width: 100%; padding: 3px;">
+            <button class="remove_violation" style="background:${COLORS.warning}; color:white; border:none; cursor:pointer; padding:2px 8px;">✕</button>
+        `;
+
+            row.querySelector('.remove_violation').onclick = () => row.remove();
+            return row;
+        }
+
+        const container = div.querySelector('#free_violations_container');
+        const addBtn = div.querySelector('#add_free_violation');
+        container.appendChild(createViolationRow());
+
+        addBtn.onclick = (e) => {
+            e.preventDefault();
+            container.appendChild(createViolationRow());
+        };
+
+        div.querySelector('#free_guard_submit').onclick = async () => {
+            const dateInput = div.querySelector('#free_guard_date').value;
+            const date = dateInput ? formatDateForReport(dateInput) : 'дд.мм.гг';
+            const collector = div.querySelector('#free_guard_collector').value;
+            const coleader = div.querySelector('#free_guard_coleader').value || '—';
+            const start = div.querySelector('#free_guard_start').value || '00:15';
+            const end = div.querySelector('#free_guard_end').value || '00:30';
+            const participants = div.querySelector('#free_guard_participants').value;
+
+            let convertedCollector = '[linkID]';
+            if (collector) {
+                if (collector.match(/^\[link\d+\]$/)) {
+                    convertedCollector = collector;
+                } else if (collector.match(/^\d+$/)) {
+                    convertedCollector = `[link${collector}]`;
+                } else {
+                    const converted = await convertSingleNameToId(collector);
+                    convertedCollector = converted || collector;
+                }
+            }
+
+            let convertedColeader = '—';
+            if (coleader && coleader !== '—') {
+                if (coleader.match(/^\[link\d+\]$/)) {
+                    convertedColeader = coleader;
+                } else if (coleader.match(/^\d+$/)) {
+                    convertedColeader = `[link${coleader}]`;
+                } else {
+                    const converted = await convertSingleNameToId(coleader);
+                    convertedColeader = converted || coleader;
+                }
+            }
+
+            let convertedParticipants = '';
+            if (participants) {
+                const participantList = participants.split(',').map(p => p.trim()).filter(p => p);
+                const convertedList = [];
+
+                for (const p of participantList) {
+                    if (p.match(/^\[link\d+\]$/)) {
+                        convertedList.push(p);
+                    } else if (p.match(/^\d+$/)) {
+                        convertedList.push(`[link${p}]`);
+                    } else {
+                        const converted = await convertSingleNameToId(p);
+                        convertedList.push(converted || p);
+                    }
+                }
+                convertedParticipants = convertedList.join(', ');
+            } else {
+                convertedParticipants = '[linkID], [linkID]';
+            }
+
+            const violationRows = document.querySelectorAll('#free_violations_container .violation-row');
+            const violations = [];
+
+            for (const row of violationRows) {
+                const name = row.querySelector('.violation_name')?.value.trim();
+                const faction = row.querySelector('.violation_faction')?.value;
+                const link = row.querySelector('.violation_link')?.value.trim();
+
+                if (name) {
+                    let linkId = '';
+                    if (name.match(/^\d+$/)) {
+                        linkId = `[link${name}]`;
+                    } else if (name.match(/^\[link\d+\]$/)) {
+                        linkId = name;
+                    } else {
+                        const converted = await convertSingleNameToId(name);
+                        linkId = converted || name;
+                    }
+
+                    let violation = `${linkId} (${faction})`;
+                    if (link) {
+                        violation += ` — [url=${link}]скриншот[/url]`;
+                    }
+                    violations.push(violation);
+                }
+            }
+
+            const field = document.querySelector('#comment');
+            if (field) {
+                let violationsText = 'отсутствуют.';
+                if (violations.length > 0) {
+                    violationsText = violations.join('; ');
+                }
+
+                field.value = `[b]Свободный патруль[/b]\n[b]Дата[/b]: ${date};\n[b]Собирающий[/b]: ${convertedCollector};\n[b]Ведущий второй части[/b]: ${convertedColeader};\n[b]Взятый временной отрезок[/b]: ${start} — ${end};\n[b]Участники[/b]: ${convertedParticipants};\n[b]Нарушения[/b]: ${violationsText}`;
+                field.focus();
+            }
+        };
+
+        return div;
+    }
+
+    function createGuardStartForm() {
+        const div = document.createElement('div');
+        div.style.marginBottom = '15px';
+        div.style.padding = '10px';
+        div.style.backgroundColor = COLORS.bgLight;
+        div.style.border = '1px solid ' + COLORS.border;
+        div.innerHTML = `
+        <div style="background-color: ${COLORS.bgAccent}; padding: 4px; margin-bottom: 10px; font-weight: bold;">Начало дозора</div>
+        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center;">
+            <span>Ваш ID/имя:</span> <input type="text" id="start_guard_id" placeholder="ID или имя" style="width: 100%;">
+            <span>Тип:</span>
+            <select id="start_guard_type" style="width: 100%;">
+                <option value="пассивное">пассивное</option>
+                <option value="активное">активное</option>
+            </select>
+            <span>Маршрут/локация:</span>
+            <select id="start_guard_route" style="width: 100%;"></select>
+        </div>
+        <button id="start_guard_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgMain}; color:${COLORS.textLight}; border:none; cursor:pointer;">Сформировать</button>
+    `;
+
+        const typeSelect = div.querySelector('#start_guard_type');
+        const routeSelect = div.querySelector('#start_guard_route');
+
+        function updateRoutes() {
+            const type = typeSelect.value;
+            routeSelect.innerHTML = '';
+
+            if (type === 'активное') {
+                const routes = [
+                    '1', '2', '3', '4', '5'
+                ];
+                routes.forEach(route => {
+                    const option = document.createElement('option');
+                    option.value = route;
+                    option.textContent = route;
+                    routeSelect.appendChild(option);
+                });
+            } else {
+                const routes = [
+                    'Крутой подъём',
+                    'Ельник',
+                    'Мёрзлые земли',
+                    'Ледопад',
+                    'Заиндевевшие кусты голубики',
+                    'Манящий обрыв'
+                ];
+                routes.forEach(route => {
+                    const option = document.createElement('option');
+                    option.value = route;
+                    option.textContent = route;
+                    routeSelect.appendChild(option);
+                });
+            }
+        }
+
+        typeSelect.addEventListener('change', updateRoutes);
+        updateRoutes();
+
+        div.querySelector('#start_guard_submit').onclick = async () => {
+            const id = div.querySelector('#start_guard_id').value;
+            const type = typeSelect.value;
+            const route = routeSelect.value;
+
+            let convertedId = '[[n]link[/n]ID]';
+            if (id) {
+                if (id.match(/^\d+$/)) {
+                    convertedId = `[[n]link[/n]${id}]`;
+                } else if (id.match(/^\[link\d+\]$/)) {
+                    const num = id.match(/\d+/)[0];
+                    convertedId = `[[n]link[/n]${num}]`;
+                } else {
+                    const converted = await convertSingleNameToId(id);
+                    const num = converted.match(/\d+/);
+                    if (num) {
+                        convertedId = `[[n]link[/n]${num[0]}]`;
+                    } else {
+                        convertedId = id;
+                    }
+                }
+            }
+
+            const field = document.querySelector('#comment');
+            if (field) {
+                field.value = `${convertedId} вышел на [b][i]${type}[/i][/b] дежурство. ${type === 'пассивное' ? 'Локация' : 'Маршрут'}: ${route}.`;
+                field.focus();
+            }
+        };
+
+        return div;
+    }
+
+    function createGuardReportForm() {
+        const div = document.createElement('div');
+        div.style.marginBottom = '15px';
+        div.style.padding = '10px';
+        div.style.backgroundColor = COLORS.bgLight;
+        div.style.border = '1px solid ' + COLORS.border;
+        div.innerHTML = `
+        <div style="background-color: ${COLORS.bgAccent}; padding: 4px; margin-bottom: 10px; font-weight: bold;">Отчёт дозора</div>
+        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center;">
+            <span>Тип:</span>
+            <select id="report_guard_type" style="width: 100%;">
+                <option value="Активный">Активный</option>
+                <option value="Пассивный">Пассивный</option>
+            </select>
+            <span>Дежурный:</span> <input type="text" id="report_guard_id" placeholder="ID или имя" style="width: 100%;">
+            <span>Дата:</span> <input type="date" id="report_guard_date" value="${getCurrentDateForInput()}" style="width: 100%;">
+            <span>Часы начала:</span> <input type="time" id="report_guard_start" value="06:55" style="width: 100%;" step="60">
+            <span>Часы окончания:</span> <input type="time" id="report_guard_end" value="08:55" style="width: 100%;" step="60">
+            <span>Маршрут/локация:</span>
+            <select id="report_guard_route" style="width: 100%;"></select>
+        </div>
+        <div style="background-color: ${COLORS.bgAccent}; padding: 4px; margin: 15px 0 10px 0; font-weight: bold;">Нарушения</div>
+        <div id="report_violations_container"></div>
+        <button id="add_report_violation" style="margin: 10px 0; padding: 4px 8px; background:${COLORS.bgAccent}; color:${COLORS.textDark}; border:none; cursor:pointer;">➕ Добавить нарушение</button>
+        <button id="report_guard_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgMain}; color:${COLORS.textLight}; border:none; cursor:pointer;">Сформировать</button>
+    `;
+
+        const typeSelect = div.querySelector('#report_guard_type');
+        const routeSelect = div.querySelector('#report_guard_route');
+
+        function updateRoutes() {
+            const type = typeSelect.value;
+            routeSelect.innerHTML = '';
+
+            if (type === 'Активный') {
+                const routes = ['1', '2', '3', '4', '5'];
+                routes.forEach(route => {
+                    const option = document.createElement('option');
+                    option.value = route;
+                    option.textContent = route;
+                    routeSelect.appendChild(option);
+                });
+            } else {
+                const routes = [
+                    'Крутой подъём',
+                    'Ельник',
+                    'Мёрзлые земли',
+                    'Ледопад',
+                    'Заиндевевшие кусты голубики',
+                    'Манящий обрыв'
+                ];
+                routes.forEach(route => {
+                    const option = document.createElement('option');
+                    option.value = route;
+                    option.textContent = route;
+                    routeSelect.appendChild(option);
+                });
+            }
+        }
+
+        typeSelect.addEventListener('change', updateRoutes);
+        updateRoutes();
+
+        function createViolationRow(violator = '', faction = 'Клан Падающей Воды', link = '') {
+            const row = document.createElement('div');
+            row.className = 'violation-row';
+            row.style.cssText = `
+            display: grid;
+            grid-template-columns: 1fr 180px 1fr auto;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding: 8px;
+            background-color: rgba(0,0,0,0.05);
+            border-radius: 4px;
+        `;
+            row.innerHTML = `
+            <input type="text" class="violation_name" placeholder="Имя или ID" value="${violator}" style="width: 100%; padding: 3px;">
+            <select class="violation_faction" style="width: 100%; padding: 3px;">
+                <option value="Клан Падающей Воды" ${faction === 'Клан Падающей Воды' ? 'selected' : ''}>Клан Падающей Воды</option>
+                <option value="Грозовое племя" ${faction === 'Грозовое племя' ? 'selected' : ''}>Грозовое племя</option>
+                <option value="Речное племя" ${faction === 'Речное племя' ? 'selected' : ''}>Речное племя</option>
+                <option value="Племя Теней" ${faction === 'Племя Теней' ? 'selected' : ''}>Племя Теней</option>
+                <option value="Племя Ветра" ${faction === 'Племя Ветра' ? 'selected' : ''}>Племя Ветра</option>
+                <option value="одиночки" ${faction === 'одиночки' ? 'selected' : ''}>одиночки</option>
+            </select>
+            <input type="text" class="violation_link" placeholder="Ссылка на скриншот" value="${link}" style="width: 100%; padding: 3px;">
+            <button class="remove_violation" style="background:${COLORS.warning}; color:white; border:none; cursor:pointer; padding:2px 8px;">✕</button>
+        `;
+            row.querySelector('.remove_violation').onclick = () => row.remove();
+            return row;
+        }
+
+        const container = div.querySelector('#report_violations_container');
+        const addBtn = div.querySelector('#add_report_violation');
+        container.appendChild(createViolationRow());
+
+        addBtn.onclick = (e) => {
+            e.preventDefault();
+            container.appendChild(createViolationRow());
+        };
+
+        div.querySelector('#report_guard_submit').onclick = async () => {
+            const type = typeSelect.value;
+            const id = div.querySelector('#report_guard_id').value;
+            const dateInput = div.querySelector('#report_guard_date').value;
+            const date = dateInput ? formatDateForReport(dateInput) : 'дд.мм.гг';
+            const start = div.querySelector('#report_guard_start').value || '00:00';
+            const end = div.querySelector('#report_guard_end').value || '00:00';
+            const route = routeSelect.value;
+
+            let convertedId = '[[n]link[/n]ID]';
+            if (id) {
+                if (id.match(/^\d+$/)) {
+                    convertedId = `[[n]link[/n]${id}]`;
+                } else if (id.match(/^\[link\d+\]$/)) {
+                    const num = id.match(/\d+/)[0];
+                    convertedId = `[[n]link[/n]${num}]`;
+                } else {
+                    const converted = await convertSingleNameToId(id);
+                    const num = converted.match(/\d+/);
+                    if (num) {
+                        convertedId = `[[n]link[/n]${num[0]}]`;
+                    } else {
+                        convertedId = id;
+                    }
+                }
+            }
+
+            const violationRows = document.querySelectorAll('#report_violations_container .violation-row');
+            const violations = [];
+
+            for (const row of violationRows) {
+                const name = row.querySelector('.violation_name')?.value.trim();
+                const faction = row.querySelector('.violation_faction')?.value;
+                const link = row.querySelector('.violation_link')?.value.trim();
+
+                if (name) {
+                    let nameWithId = name;
+                    if (!name.match(/^\d+$/) && !name.match(/^\[link\d+\]$/)) {
+                        const converted = await convertSingleNameToId(name);
+                        const idMatch = converted.match(/\[link(\d+)\]/);
+                        if (idMatch) {
+                            nameWithId = `${name} ${idMatch[1]}`;
+                        }
+                    } else if (name.match(/^\d+$/)) {
+                        nameWithId = `[link${name}] ${name}`;
+                    }
+
+                    let violation = `${nameWithId} (${faction})`;
+                    if (link) {
+                        violation += ` — [url=${link}]скриншот[/url]`;
+                    }
+                    violations.push(violation);
+                }
+            }
+
+            let result = `[b]${type} дозор[/b]\n[b]Дежурный[/b]: ${convertedId};\n[b]Дата[/b]: ${date};\n[b]Часы дежурства[/b]: ${start} — ${end};\n`;
+            result += type === 'Активный' ? `[b]Маршрут[/b]: ${route};\n` : `[b]Охраняемая локация[/b]: ${route};\n`;
+
+            let violationsText = 'отсутствуют.';
+            if (violations.length > 0) {
+                violationsText = violations.join('; ');
+            }
+            result += `[b]Нарушения[/b]: ${violationsText}`;
+
+            const field = document.querySelector('#comment');
+            if (field) {
+                field.value = result;
+                field.focus();
+            }
+        };
+
+        return div;
+    }
+
+    function createGuardChildPatrolForm() {
+        const div = document.createElement('div');
+        div.style.marginBottom = '15px';
+        div.style.padding = '10px';
+        div.style.backgroundColor = COLORS.bgLight;
+        div.style.border = '1px solid ' + COLORS.border;
+        div.innerHTML = `
+        <div style="background-color: ${COLORS.bgAccent}; padding: 4px; margin-bottom: 10px; font-weight: bold;">Детский патруль</div>
+        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center;">
+            <span>Дата:</span> <input type="date" id="child_patrol_date" value="${getCurrentDateForInput()}" style="width: 100%;">
+            <span>Время:</span> <select id="child_patrol_time" style="width: 100%;">
+                <option value="12:00">12:00</option>
+                <option value="17:00">17:00</option>
+                <option value="20:00">20:00</option>
+                <option value="22:00">22:00</option>
+                <option value="00:00">00:00</option>
+                <option value="04:00">04:00</option>
+                <option value="07:00">07:00</option>
+                <option value="09:00">09:00</option>
+            </select>
+            <span>Собирающий:</span> <input type="text" id="child_patrol_collector" placeholder="ID или имя" style="width: 100%;">
+            <span>Ведущий 2 части:</span> <input type="text" id="child_patrol_coleader" placeholder="ID, имя или —" style="width: 100%;">
+            <span>Участники:</span> <input type="text" id="child_patrol_participants" placeholder="через запятую" style="width: 100%;">
+        </div>
+        <button id="child_patrol_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgMain}; color:${COLORS.textLight}; border:none; cursor:pointer;">Сформировать</button>
+    `;
+
+        div.querySelector('#child_patrol_submit').onclick = async () => {
+            const dateInput = div.querySelector('#child_patrol_date').value;
+            const date = dateInput ? formatDateForReport(dateInput) : 'дд.мм.гг';
+            const time = div.querySelector('#child_patrol_time').value;
+            const collector = div.querySelector('#child_patrol_collector').value;
+            const coleader = div.querySelector('#child_patrol_coleader').value || '—';
+            const participants = div.querySelector('#child_patrol_participants').value;
+
+            let convertedCollector = '[linkID]';
+            let convertedColeader = '[linkID]';
+            let convertedParticipants = '[linkID]';
+
+            if (collector) {
+                const converted = await convertNamesToIds(collector);
+                convertedCollector = converted;
+            }
+            if (coleader && coleader !== '—') {
+                const converted = await convertNamesToIds(coleader);
+                convertedColeader = converted;
+            }
+            if (participants) {
+                convertedParticipants = await convertNamesToIds(participants);
+            }
+
+            const field = document.querySelector('#comment');
+            if (field) {
+                field.value = `[b]Детский патруль[/b]\n[b]Дата[/b]: ${date};\n[b]Время[/b]: ${time};\n[b]Собирающий[/b]: ${convertedCollector};\n[b]Ведущий второй части[/b]: ${convertedColeader};\n[b]Участники[/b]: ${convertedParticipants}.`;
+                field.focus();
+            }
+        };
+
+        return div;
+    }
+
+    function createGuardChildStartForm() {
+        const div = document.createElement('div');
+        div.style.marginBottom = '15px';
+        div.style.padding = '10px';
+        div.style.backgroundColor = COLORS.bgLight;
+        div.style.border = '1px solid ' + COLORS.border;
+        div.innerHTML = `
+        <div style="background-color: ${COLORS.bgAccent}; padding: 4px; margin-bottom: 10px; font-weight: bold;">Начало детского дозора</div>
+        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center;">
+            <span>Ваш ID/имя:</span> <input type="text" id="child_start_id" placeholder="ID или имя" style="width: 100%;">
+            <span>Маршрут:</span>
+            <select id="child_start_route" style="width: 100%;">
+                <option value="1">1</option>
+                <option value="2">2</option>
+            </select>
+        </div>
+        <button id="child_start_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgMain}; color:${COLORS.textLight}; border:none; cursor:pointer;">Сформировать</button>
+    `;
+
+        div.querySelector('#child_start_submit').onclick = async () => {
+            const id = div.querySelector('#child_start_id').value;
+            const route = div.querySelector('#child_start_route').value;
+
+            let convertedId = '[[n]link[/n]ID]';
+            if (id) {
+                if (id.match(/^\d+$/)) {
+                    convertedId = `[[n]link[/n]${id}]`;
+                } else if (id.match(/^\[link\d+\]$/)) {
+                    const num = id.match(/\d+/)[0];
+                    convertedId = `[[n]link[/n]${num}]`;
+                } else {
+                    const converted = await convertSingleNameToId(id);
+                    const num = converted.match(/\d+/);
+                    if (num) {
+                        convertedId = `[[n]link[/n]${num[0]}]`;
+                    } else {
+                        convertedId = id;
+                    }
+                }
+            }
+
+            const field = document.querySelector('#comment');
+            if (field) {
+                field.value = `${convertedId} вышел на [b][i]детское[/i][/b] дежурство. Маршрут: ${route}.`;
+                field.focus();
+            }
+        };
+
+        return div;
+    }
+
+    function createGuardChildReportForm() {
+        const div = document.createElement('div');
+        div.style.marginBottom = '15px';
+        div.style.padding = '10px';
+        div.style.backgroundColor = COLORS.bgLight;
+        div.style.border = '1px solid ' + COLORS.border;
+        div.innerHTML = `
+        <div style="background-color: ${COLORS.bgAccent}; padding: 4px; margin-bottom: 10px; font-weight: bold;">Отчёт детского дозора</div>
+        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center;">
+            <span>Дежурный:</span> <input type="text" id="child_report_id" placeholder="ID или имя" style="width: 100%;">
+            <span>Дата:</span> <input type="date" id="child_report_date" value="${getCurrentDateForInput()}" style="width: 100%;">
+            <span>Часы начала:</span> <input type="time" id="child_report_start" value="18:00" style="width: 100%;" step="60">
+            <span>Часы окончания:</span> <input type="time" id="child_report_end" value="20:30" style="width: 100%;" step="60">
+            <span>Маршрут:</span>
+            <select id="child_report_route" style="width: 100%;">
+                <option value="1">1</option>
+                <option value="2">2</option>
+            </select>
+        </div>
+        <button id="child_report_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgMain}; color:${COLORS.textLight}; border:none; cursor:pointer;">Сформировать</button>
+    `;
+
+        div.querySelector('#child_report_submit').onclick = async () => {
+            const id = div.querySelector('#child_report_id').value;
+            const dateInput = div.querySelector('#child_report_date').value;
+            const date = dateInput ? formatDateForReport(dateInput) : 'дд.мм.гг';
+            const start = div.querySelector('#child_report_start').value || '00:00';
+            const end = div.querySelector('#child_report_end').value || '00:00';
+            const route = div.querySelector('#child_report_route').value;
+
+            let convertedId = '[[n]link[/n]ID]';
+            if (id) {
+                if (id.match(/^\d+$/)) {
+                    convertedId = `[[n]link[/n]${id}]`;
+                } else if (id.match(/^\[link\d+\]$/)) {
+                    const num = id.match(/\d+/)[0];
+                    convertedId = `[[n]link[/n]${num}]`;
+                } else {
+                    const converted = await convertSingleNameToId(id);
+                    const num = converted.match(/\d+/);
+                    if (num) {
+                        convertedId = `[[n]link[/n]${num[0]}]`;
+                    } else {
+                        convertedId = id;
+                    }
+                }
+            }
+
+            const field = document.querySelector('#comment');
+            if (field) {
+                field.value = `[b]Детский дозор[/b]\n[b]Дежурный[/b]: ${convertedId};\n[b]Дата[/b]: ${date};\n[b]Часы дежурства[/b]: ${start} — ${end};\n[b]Маршрут[/b]: ${route}.`;
+                field.focus();
+            }
+        };
+
+        return div;
+    }
+
+    function createGuardAchievementForm() {
+        const div = document.createElement('div');
+        div.style.marginBottom = '15px';
+        div.style.padding = '10px';
+        div.style.backgroundColor = COLORS.bgLight;
+        div.style.border = '1px solid ' + COLORS.border;
+        div.innerHTML = `
+        <div style="background-color: ${COLORS.bgAccent}; padding: 4px; margin-bottom: 10px; font-weight: bold;">Получение ачивки</div>
+        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center;">
+            <span>Ваш ID/имя:</span> <input type="text" id="guard_achieve_id" placeholder="ID или имя" style="width: 100%;">
+            <span>Название ачивки:</span> <input type="text" id="guard_achieve_name" placeholder="название" style="width: 100%;">
+            <span>Выбор шапки:</span>
+            <select id="guard_achieve_hat" style="width: 100%;">
+                <option value="">Не выбрано</option>
+                <option value="ночь">ночь</option>
+                <option value="день">день</option>
+            </select>
+            <span>Скриншот:</span> <input type="text" id="guard_achieve_link" placeholder="ссылка" style="width: 100%;">
+        </div>
+        <button id="guard_achieve_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgMain}; color:${COLORS.textLight}; border:none; cursor:pointer;">Сформировать</button>
+    `;
+
+        div.querySelector('#guard_achieve_submit').onclick = async () => {
+            const id = div.querySelector('#guard_achieve_id').value;
+            const name = div.querySelector('#guard_achieve_name').value || 'название';
+            const hat = div.querySelector('#guard_achieve_hat').value;
+            const link = div.querySelector('#guard_achieve_link').value || 'ссылка';
+
+            let convertedId = 'ID';
+            if (id) {
+                const converted = await convertNamesToIds(id);
+                const idMatch = converted.match(/\[link(\d+)\]/);
+                convertedId = idMatch ? idMatch[1] : id;
+            }
+
+            let hatLine = '';
+            if (hat) {
+                hatLine = `\n[b]Выбор шапки:[/b] ${hat}.`;
+            }
+
+            const field = document.querySelector('#comment');
+            if (field) {
+                field.value = `[b]Ачивка[/b]\nЯ, ${convertedId}, желаю получить ачивку под названием «${name}».${hatLine}\n[b]Подтверждение:[/b] ${link}`;
+                field.focus();
+            }
+        };
+
+        return div;
+    }
+
+    function createGuardTaskStartForm() {
+        const div = document.createElement('div');
+        div.style.marginBottom = '15px';
+        div.style.padding = '10px';
+        div.style.backgroundColor = COLORS.bgLight;
+        div.style.border = '1px solid ' + COLORS.border;
+        div.innerHTML = `
+        <div style="background-color: ${COLORS.bgAccent}; padding: 4px; margin-bottom: 10px; font-weight: bold;">Начало задания</div>
+        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center;">
+            <span>Ваш ID/имя:</span> <input type="text" id="task_start_id" placeholder="ID или имя" style="width: 100%;">
+            <span>Номер задания:</span> <input type="text" id="task_start_num" placeholder="2" style="width: 100%;">
+        </div>
+        <button id="task_start_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgMain}; color:${COLORS.textLight}; border:none; cursor:pointer;">Сформировать</button>
+    `;
+
+        div.querySelector('#task_start_submit').onclick = async () => {
+            const id = div.querySelector('#task_start_id').value;
+            const num = div.querySelector('#task_start_num').value || 'номер';
+
+            let convertedId = 'ID';
+            if (id) {
+                const converted = await convertNamesToIds(id);
+                const idMatch = converted.match(/\[link(\d+)\]/);
+                convertedId = idMatch ? idMatch[1] : id;
+            }
+
+            const field = document.querySelector('#comment');
+            if (field) {
+                field.value = `[b]Задание[/b]\nЯ, ${convertedId}, приступаю к заданию №${num}.`;
+                field.focus();
+            }
+        };
+
+        return div;
+    }
+
+    function createGuardTaskCompleteForm() {
+        const div = document.createElement('div');
+        div.style.marginBottom = '15px';
+        div.style.padding = '10px';
+        div.style.backgroundColor = COLORS.bgLight;
+        div.style.border = '1px solid ' + COLORS.border;
+        div.innerHTML = `
+        <div style="background-color: ${COLORS.bgAccent}; padding: 4px; margin-bottom: 10px; font-weight: bold;">Завершение задания</div>
+        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center;">
+            <span>Ваш ID/имя:</span> <input type="text" id="task_complete_id" placeholder="ID или имя" style="width: 100%;">
+            <span>Номер задания:</span> <input type="text" id="task_complete_num" placeholder="2" style="width: 100%;">
+            <span>Скриншот начала:</span> <input type="text" id="task_complete_start" placeholder="ссылка" style="width: 100%;">
+            <span>Подтверждение:</span> <input type="text" id="task_complete_proof" placeholder="ссылка" style="width: 100%;">
+        </div>
+        <button id="task_complete_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgMain}; color:${COLORS.textLight}; border:none; cursor:pointer;">Сформировать</button>
+    `;
+
+        div.querySelector('#task_complete_submit').onclick = async () => {
+            const id = div.querySelector('#task_complete_id').value;
+            const num = div.querySelector('#task_complete_num').value || 'номер';
+            const startLink = div.querySelector('#task_complete_start').value || 'ссылка';
+            const proofLink = div.querySelector('#task_complete_proof').value || 'ссылка';
+
+            let convertedId = 'ID';
+            if (id) {
+                const converted = await convertNamesToIds(id);
+                const idMatch = converted.match(/\[link(\d+)\]/);
+                convertedId = idMatch ? idMatch[1] : id;
+            }
+
+            const field = document.querySelector('#comment');
+            if (field) {
+                field.value = `[b]Задание[/b]\nЯ, ${convertedId}, выполнил задание №${num}.\n[b]Начало отсчёта:[/b] [url=${startLink}]скриншот[/url].\n[b]Подтверждение:[/b] [url=${proofLink}]скриншот[/url].`;
+                field.focus();
+            }
+        };
 
         return div;
     }
@@ -1281,6 +2195,177 @@
                 { title: 'Водный патруль', form: createPatrolForm() },
                 { title: 'Ношение котов на дно', form: createCarryForm() }
             );
+        }
+
+        if (isGuard) {
+            const adultHeader = document.createElement('div');
+            adultHeader.style.cssText = `
+        background-color: ${COLORS.bgMain};
+        color: ${COLORS.textLight};
+        padding: 8px;
+        margin: 5px 0;
+        cursor: pointer;
+        border-radius: 4px;
+        font-weight: bold;
+        text-align: center;
+    `;
+            adultHeader.textContent = 'Взрослая деятельность';
+
+            const adultContainer = document.createElement('div');
+            adultContainer.style.display = 'none';
+            adultContainer.style.padding = '10px';
+            adultContainer.style.backgroundColor = COLORS.bgLight;
+            adultContainer.style.border = '1px solid ' + COLORS.border;
+            adultContainer.style.borderRadius = '4px';
+            adultContainer.style.marginBottom = '10px';
+
+            const adultSections = [
+                { title: 'Плановый патруль', form: createGuardPlannedForm() },
+                { title: 'Свободный патруль', form: createGuardFreeForm() },
+                { title: 'Начало дозора', form: createGuardStartForm() },
+                { title: 'Отчёт дозора', form: createGuardReportForm() }
+            ];
+
+            adultSections.forEach(s => {
+                const header = document.createElement('div');
+                header.style.cssText = `
+            background-color: ${COLORS.bgAccent};
+            color: ${COLORS.textDark};
+            padding: 6px;
+            margin: 3px 0;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 13px;
+        `;
+                header.textContent = s.title;
+                s.form.style.display = 'none';
+                header.onclick = () => {
+                    s.form.style.display = s.form.style.display === 'none' ? 'block' : 'none';
+                };
+                adultContainer.appendChild(header);
+                adultContainer.appendChild(s.form);
+            });
+
+            div.appendChild(adultHeader);
+            div.appendChild(adultContainer);
+
+            adultHeader.onclick = () => {
+                adultContainer.style.display = adultContainer.style.display === 'none' ? 'block' : 'none';
+            };
+
+            const childHeader = document.createElement('div');
+            childHeader.style.cssText = `
+        background-color: ${COLORS.bgMain};
+        color: ${COLORS.textLight};
+        padding: 8px;
+        margin: 5px 0;
+        cursor: pointer;
+        border-radius: 4px;
+        font-weight: bold;
+        text-align: center;
+    `;
+            childHeader.textContent = 'Детская деятельность';
+
+            const childContainer = document.createElement('div');
+            childContainer.style.display = 'none';
+            childContainer.style.padding = '10px';
+            childContainer.style.backgroundColor = COLORS.bgLight;
+            childContainer.style.border = '1px solid ' + COLORS.border;
+            childContainer.style.borderRadius = '4px';
+            childContainer.style.marginBottom = '10px';
+
+            const childSections = [
+                { title: 'Детский патруль', form: createGuardChildPatrolForm() },
+                { title: 'Начало детского дозора', form: createGuardChildStartForm() },
+                { title: 'Отчёт детского дозора', form: createGuardChildReportForm() }
+            ];
+
+            childSections.forEach(s => {
+                const header = document.createElement('div');
+                header.style.cssText = `
+            background-color: ${COLORS.bgAccent};
+            color: ${COLORS.textDark};
+            padding: 6px;
+            margin: 3px 0;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 13px;
+        `;
+                header.textContent = s.title;
+                s.form.style.display = 'none';
+                header.onclick = () => {
+                    s.form.style.display = s.form.style.display === 'none' ? 'block' : 'none';
+                };
+                childContainer.appendChild(header);
+                childContainer.appendChild(s.form);
+            });
+
+            div.appendChild(childHeader);
+            div.appendChild(childContainer);
+
+            childHeader.onclick = () => {
+                childContainer.style.display = childContainer.style.display === 'none' ? 'block' : 'none';
+            };
+
+            const achievementHeader = document.createElement('div');
+            achievementHeader.style.cssText = `
+        background-color: ${COLORS.bgMain};
+        color: ${COLORS.textLight};
+        padding: 8px;
+        margin: 5px 0;
+        cursor: pointer;
+        border-radius: 4px;
+        font-weight: bold;
+        text-align: center;
+    `;
+            achievementHeader.textContent = 'Ачивки';
+
+            const achievementContainer = document.createElement('div');
+            achievementContainer.style.display = 'none';
+            achievementContainer.style.padding = '10px';
+            achievementContainer.style.backgroundColor = COLORS.bgLight;
+            achievementContainer.style.border = '1px solid ' + COLORS.border;
+            achievementContainer.style.borderRadius = '4px';
+            achievementContainer.style.marginBottom = '10px';
+
+            const achievementSections = [
+                { title: 'Получение ачивки', form: createGuardAchievementForm() },
+                { title: 'Начало задания', form: createGuardTaskStartForm() },
+                { title: 'Завершение задания', form: createGuardTaskCompleteForm() }
+            ];
+
+            achievementSections.forEach(s => {
+                const header = document.createElement('div');
+                header.style.cssText = `
+            background-color: ${COLORS.bgAccent};
+            color: ${COLORS.textDark};
+            padding: 6px;
+            margin: 3px 0;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 13px;
+        `;
+                header.textContent = s.title;
+                s.form.style.display = 'none';
+                header.onclick = () => {
+                    s.form.style.display = s.form.style.display === 'none' ? 'block' : 'none';
+                };
+                achievementContainer.appendChild(header);
+                achievementContainer.appendChild(s.form);
+            });
+
+            div.appendChild(achievementHeader);
+            div.appendChild(achievementContainer);
+
+            achievementHeader.onclick = () => {
+                achievementContainer.style.display = achievementContainer.style.display === 'none' ? 'block' : 'none';
+            };
         }
 
         if (isHunt) {
@@ -2275,10 +3360,6 @@
     }
 
     function createPanel() {
-        if (isGuard) {
-            return null;
-        }
-
         const panel = document.createElement('div');
         panel.id = 'report-helper-panel';
         panel.innerHTML = `
@@ -2289,17 +3370,6 @@
         </div>
         <div class="tab-content"></div>
     `;
-        const contactLine = document.createElement('div');
-        contactLine.style.cssText = `
-        text-align: center;
-        margin-top: 10px;
-        padding: 5px;
-        font-size: 11px;
-        color: ${COLORS.textDark};
-        border-top: 1px dashed ${COLORS.border};
-        `;
-        contactLine.innerHTML = 'По всем вопросам, изменениям и багам обращаться к <a href="/cat1672106" target="_blank">Воющему</a>.';
-        panel.appendChild(contactLine);
 
         panel.querySelector('.panel-header').style.cssText = `
         background-color: ${COLORS.bgMain};
@@ -2358,6 +3428,18 @@
             autoTab.style.display = 'none';
             templatesTab.style.display = 'block';
         };
+
+        const contactLine = document.createElement('div');
+        contactLine.style.cssText = `
+        text-align: center;
+        margin-top: 10px;
+        padding: 5px;
+        font-size: 11px;
+        color: ${COLORS.textDark};
+        border-top: 1px dashed ${COLORS.border};
+    `;
+        contactLine.innerHTML = 'По всем вопросам, изменениям и багам обращаться к <a href="/cat1672106" target="_blank">Воющему</a>.';
+        panel.appendChild(contactLine);
 
         return panel;
     }
@@ -2480,11 +3562,9 @@
     }
 
     waitForElement('#send_comment', (commentBlock) => {
-        if (!isGuard) {
-            const panel = createPanel();
-            if (panel) {
-                insertAfter(commentBlock, panel);
-            }
+        const panel = createPanel();
+        if (panel) {
+            insertAfter(commentBlock, panel);
         }
     });
 
@@ -2985,11 +4065,19 @@
             localStorage.setItem('hunt_counter_state', JSON.stringify(counterState));
         };
 
-        function getDateRange() {
-            const end = new Date();
-            const start = new Date();
-            start.setDate(start.getDate() - 6);
-            start.setHours(0, 0, 0, 0);
+        function getWeekRange() {
+            const now = new Date();
+            const dayOfWeek = now.getDay();
+
+            const monday = new Date(now);
+            const sunday = new Date(now);
+
+            const diffToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
+            monday.setDate(now.getDate() + diffToMonday);
+            monday.setHours(0, 0, 0, 0);
+
+            sunday.setDate(monday.getDate() + 6);
+            sunday.setHours(23, 59, 59, 999);
 
             const formatDate = (date) => {
                 const day = String(date.getDate()).padStart(2, '0');
@@ -2998,9 +4086,14 @@
                 return `${day}.${month}.${year}`;
             };
 
-            document.getElementById('hunt-week-dates').textContent = `${formatDate(start)} – ${formatDate(end)}`;
+            document.getElementById('hunt-week-dates').textContent = `${formatDate(monday)} – ${formatDate(sunday)}`;
+
+            return { start: monday, end: sunday };
         }
-        getDateRange();
+
+        const weekRange = getWeekRange();
+        const weekStart = weekRange.start;
+        const weekEnd = weekRange.end;
 
         function parseDate(dateStr) {
             const parts = dateStr.split('.');
@@ -3045,7 +4138,7 @@
                 const commentDate = parseDate(dateMatch[1]);
                 if (!commentDate) return;
 
-                if (commentDate < weekAgo || commentDate > today) return;
+                if (commentDate < weekStart || commentDate > weekEnd) return;
 
                 const nameMatch = commentText.match(/Охотник:\s*([^\n\.]+)/);
                 if (!nameMatch) return;
