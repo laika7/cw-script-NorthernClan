@@ -381,7 +381,7 @@
             </select>
             <span>Собирающий:</span> <input type="text" id="planned_collector" placeholder="ID или имя" style="width: 100%;">
             <span>Ведущий второй части:</span> <input type="text" id="planned_coleader" placeholder="ID, имя или —" style="width: 100%;">
-            <span>Участники:</span> <input type="text" id="planned_participants" placeholder="через запятую" style="width: 100%;">
+            <span>Участники:</span> <input type="text" id="planned_participants" placeholder="ID или имена через запятую" style="width: 100%;">
         </div>
 
         <div style="background-color: ${COLORS.bgAccent}; padding: 4px; margin: 15px 0 10px 0; font-weight: bold;">Нарушения</div>
@@ -536,7 +536,7 @@
             <span>Ведущий 2 части:</span> <input type="text" id="free_guard_coleader" placeholder="ID, имя или —" style="width: 100%;">
             <span>Время начала:</span> <input type="time" id="free_guard_start" value="00:15" style="width: 100%;" step="60">
             <span>Время окончания:</span> <input type="time" id="free_guard_end" value="00:30" style="width: 100%;" step="60">
-            <span>Участники:</span> <input type="text" id="free_guard_participants" placeholder="через запятую" style="width: 100%;">
+            <span>Участники:</span> <input type="text" id="free_guard_participants" placeholder="ID или имена через запятую" style="width: 100%;">
         </div>
 
         <div style="background-color: ${COLORS.bgAccent}; padding: 4px; margin: 15px 0 10px 0; font-weight: bold;">Нарушения</div>
@@ -970,7 +970,7 @@
             </select>
             <span>Собирающий:</span> <input type="text" id="child_patrol_collector" placeholder="ID или имя" style="width: 100%;">
             <span>Ведущий 2 части:</span> <input type="text" id="child_patrol_coleader" placeholder="ID, имя или —" style="width: 100%;">
-            <span>Участники:</span> <input type="text" id="child_patrol_participants" placeholder="через запятую" style="width: 100%;">
+            <span>Участники:</span> <input type="text" id="child_patrol_participants" placeholder="ID или имена через запятую" style="width: 100%;">
         </div>
         <button id="child_patrol_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgMain}; color:${COLORS.textLight}; border:none; cursor:pointer;">Сформировать</button>
     `;
