@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Автоматизированные отчёты
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  Автоматизация отчётов и жезнеоблегчаловка
 // @author       Воющий
 // @match        *://catwar.su/blog230782*
@@ -1257,7 +1257,7 @@
                 <span>Собрал(а):</span> <input type="text" id="hunt_leader" placeholder="ID или имя" style="width: 100%;">
                 <span>Охотники (дичь):</span> <input type="text" id="hunt_hunters" placeholder="ID (n дичи) или имена (n дичи) через запятую" style="width: 100%;">
                 <span>Особая дичь:</span> <input type="text" id="hunt_special" placeholder="ID (n дичи) или имена (n дичи) через запятую если есть" style="width: 100%;">
-                <span>Носильщики:</span> <input type="text" id="hunt_carriers" placeholder="ID или имена через запятую" style="width: 100%;">
+                <span>Носильщики:</span> <input type="text" id="hunt_carriers" placeholder="ID или имена через запятую, или -" style="width: 100%;">
             </div>
             <button id="hunt_patrol_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgMain}; color:${COLORS.textLight}; border:none; cursor:pointer;">Сформировать</button>
         `;
@@ -1593,8 +1593,8 @@
                 <span>Время:</span> <select id="patrol_time" style="width: 100%;">${timeOptions}</select>
                 <span>Собирающий:</span> <input type="text" id="patrol_collector" placeholder="ID или имя" style="width: 100%;">
                 <span>Ведущий 2 части:</span> <input type="text" id="patrol_coleader" placeholder="ID, имя или —" style="width: 100%;">
-                <span>Участники:</span> <input type="text" id="patrol_participants" placeholder="через запятую" style="width: 100%;">
-                <span>Нарушения:</span> <input type="text" id="patrol_violations" placeholder="оставьте пустым для случайного" style="width: 100%;">
+                <span>Участники:</span> <input type="text" id="patrol_participants" placeholder="ID или имена через запятую" style="width: 100%;">
+                <span>Нарушения:</span> <input type="text" id="patrol_violations" placeholder="если нет, оставьте пустым" style="width: 100%;">
                 <span>Скриншот:</span> <input type="text" id="patrol_link" placeholder="если есть нарушения" style="width: 100%;">
             </div>
             <button id="patrol_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgMain}; color:${COLORS.textLight}; border:none; cursor:pointer;">Сформировать</button>
@@ -1722,9 +1722,10 @@
             let proofText = '[url=ссылка]скриншот[/url]';
             if (links) {
                 const linkArray = links.split(',').map(l => l.trim()).filter(l => l);
+
                 if (linkArray.length === 1) {
-                    proofText = linkArray[0];
-                } else {
+                    proofText = `[url=${linkArray[0]}]скриншот[/url]`;
+                } else if (linkArray.length > 1) {
                     proofText = linkArray.map((link, index) => `[url=${link}]скриншот ${index + 1}[/url]`).join(', ');
                 }
             }
