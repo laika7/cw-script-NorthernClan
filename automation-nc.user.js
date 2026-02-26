@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Автоматизированные отчёты
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.2
 // @description  Автоматизация отчётов и жезнеоблегчаловка
 // @author       Воющий
 // @match        *://catwar.su/blog230782*
@@ -1528,9 +1528,10 @@
             const level = div.querySelector('#pu_level').value || 'n';
             const link = div.querySelector('#pu_link').value || 'ссылка';
 
-            let convertedId = '[linkID]';
+            let convertedId = '[[n]link[/n]ID]';
             if (id) {
                 convertedId = await convertNamesToIds(id);
+                convertedId = convertedId.replace('[link', '[[n]link[/n]');
             }
 
             const field = document.querySelector('#comment');
@@ -1562,9 +1563,10 @@
             const id = div.querySelector('#heal_id').value;
             const link = div.querySelector('#heal_link').value || 'ссылка';
 
-            let convertedId = '[linkID]';
+            let convertedId = '[[n]link[/n]ID]';
             if (id) {
                 convertedId = await convertNamesToIds(id);
+                convertedId = convertedId.replace('[link', '[[n]link[/n]');
             }
 
             const field = document.querySelector('#comment');
@@ -1655,27 +1657,28 @@
         div.style.backgroundColor = COLORS.bgLight;
         div.style.border = '1px solid ' + COLORS.border;
         div.innerHTML = `
-            <div style="background-color: ${COLORS.bgAccent}; padding: 4px; margin-bottom: 10px; font-weight: bold;">Ношение котов на дно</div>
-            <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
-                <span>Носильщик:</span> <input type="text" id="carry_carrier" placeholder="ID или имя" style="width: 100%;">
-                <span>Кого несли:</span> <input type="text" id="carry_carried" placeholder="ID или имя" style="width: 100%;">
-                <span>Кол-во раз:</span> <input type="text" id="carry_times" placeholder="3" style="width: 100%;">
-                <span>Скриншот:</span> <input type="text" id="carry_link" placeholder="ссылка" style="width: 100%;">
-            </div>
-            <button id="carry_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgMain}; color:${COLORS.textLight}; border:none; cursor:pointer;">Сформировать</button>
-        `;
+        <div style="background-color: ${COLORS.bgAccent}; padding: 4px; margin-bottom: 10px; font-weight: bold;">Ношение котов на дно</div>
+        <div style="display: grid; grid-template-columns: 100px 1fr; gap: 8px; align-items: center;">
+            <span>Носильщик:</span> <input type="text" id="carry_carrier" placeholder="ID или имя" style="width: 100%;">
+            <span>Кого несли:</span> <input type="text" id="carry_carried" placeholder="ID или имя" style="width: 100%;">
+            <span>Кол-во раз:</span> <input type="text" id="carry_times" placeholder="3" style="width: 100%;">
+            <span>Скриншот:</span> <input type="text" id="carry_link" placeholder="ссылка" style="width: 100%;">
+        </div>
+        <button id="carry_submit" style="width:100%; margin-top:10px; padding:6px; background:${COLORS.bgMain}; color:${COLORS.textLight}; border:none; cursor:pointer;">Сформировать</button>
+    `;
 
         div.querySelector('#carry_submit').onclick = async () => {
             const carrier = div.querySelector('#carry_carrier').value;
             const carried = div.querySelector('#carry_carried').value;
             const times = div.querySelector('#carry_times').value || 'n';
-            const link = div.querySelector('#carry_link').value || 'ссылка';
+            const link = div.querySelector('#carry_link').value;
 
-            let convertedCarrier = '[linkID]';
+            let convertedCarrier = '[[n]link[/n]ID]';
             let convertedCarried = '[linkID]';
 
             if (carrier) {
                 convertedCarrier = await convertNamesToIds(carrier);
+                convertedCarrier = convertedCarrier.replace('[link', '[[n]link[/n]');
             }
             if (carried) {
                 convertedCarried = await convertNamesToIds(carried);
@@ -1683,7 +1686,11 @@
 
             const field = document.querySelector('#comment');
             if (field) {
-                field.value = `Я, ${convertedCarrier}, относил игрока ${convertedCarried} на дно ${times} раз. [url=${link}]Подтверждение[/url]`;
+                let result = `Я, ${convertedCarrier}, относил игрока ${convertedCarried} на дно ${times} раз.`;
+                if (link) {
+                    result += ` [url=${link}]Подтверждение[/url]`;
+                }
+                field.value = result;
                 field.focus();
             }
         };
