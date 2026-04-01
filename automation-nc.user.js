@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Автоматизированные отчёты
 // @namespace    http://tampermonkey.net/
-// @version      2.2
+// @version      2.3
 // @description  Автоматизация отчётов и жезнеоблегчаловка
 // @author       Воющий
 // @match        *://catwar.su/blog230782*
@@ -4119,21 +4119,46 @@
         async function calculateWeeklyHunt(hunterName) {
             if (!hunterName) return 0;
 
-            const weekAgo = new Date();
-            weekAgo.setDate(weekAgo.getDate() - 7);
-            weekAgo.setHours(0, 0, 0, 0);
-
-            const today = new Date();
-            today.setHours(23, 59, 59, 999);
-
-            let convertedId = hunterName;
-            const formattedName = hunterName.split(' ').map(word => {
-                if (word.length === 0) return word;
-                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-            }).join(' ');
+            const now = new Date();
+            const dayOfWeek = now.getDay();
+            const monday = new Date(now);
+            const sunday = new Date(now);
+            const diffToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
+            monday.setDate(now.getDate() + diffToMonday);
+            monday.setHours(0, 0, 0, 0);
+            sunday.setDate(monday.getDate() + 6);
+            sunday.setHours(23, 59, 59, 999);
 
             const comments = document.querySelectorAll('.view-comment');
             let total = 0;
+
+            let searchName = hunterName;
+            const isId = /^\d+$/.test(hunterName.trim());
+
+            if (isId) {
+                const response = await fetch('/ajax/convert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        data: hunterName,
+                        delimiter: ',',
+                        template: '%name%',
+                        type_in: '1',
+                        type_out: '0'
+                    })
+                });
+                const name = await response.text();
+                if (name && name !== hunterName) {
+                    searchName = name.trim();
+                } else {
+                    return 0;
+                }
+            }
+
+            const formattedName = searchName.split(' ').map(word => {
+                if (word.length === 0) return word;
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            }).join(' ');
 
             comments.forEach(comment => {
                 const commentText = comment.textContent || '';
@@ -4143,15 +4168,20 @@
                 const dateMatch = commentText.match(/Дата:\s*(\d{1,2}\.\d{1,2}\.\d{2,4})/);
                 if (!dateMatch) return;
 
-                const commentDate = parseDate(dateMatch[1]);
-                if (!commentDate) return;
+                const dateStr = dateMatch[1];
+                const parts = dateStr.split('.');
+                let day = parseInt(parts[0]);
+                let month = parseInt(parts[1]) - 1;
+                let year = parseInt(parts[2]);
+                if (year < 100) year += 2000;
+                const commentDate = new Date(year, month, day);
 
-                if (commentDate < weekStart || commentDate > weekEnd) return;
+                if (commentDate < monday || commentDate > sunday) return;
 
                 const nameMatch = commentText.match(/Охотник:\s*([^\n\.]+)/);
                 if (!nameMatch) return;
 
-                let commentHunter = nameMatch[1].trim().replace(/[\[\]link]/g, '');
+                let commentHunter = nameMatch[1].trim();
 
                 if (commentHunter === formattedName) {
                     const countMatch = commentText.match(/Кол-во пойманной дичи:\s*(\d+)/);
